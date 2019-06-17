@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=.5">
+	<title>Test Game</title>
+
+	<script src="static/jspython.js"></script>
+	<script src="static/jquery-3.3.1.min.js"></script>
+	<script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
+	<script src="https://code.createjs.com/tweenjs-0.6.2.min.js"></script>
+	 <!-- <script src="https://code.createjs.com/soundjs-0.6.2.min.js"></script>< -->
+	 <script src="https://connect.facebook.net/en_US/fbinstant.6.2.js"></script>
+
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+		}
+
+		canvas {
+			background: rgb(52, 61, 70);
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas" width="600" height="400"></canvas>
+	<script src="static/controller.js"></script>
+	<script src="static/model.js"></script>
+	<script>
+		var canvas = document.getElementById("canvas");
+
+		var controller;
+		var stage;
+		var mask;
+		var border;
+		var scene;
+		var keydown_avalible = true;
+
+		// var interval = null;
+		// var last_pressed = new Date().getTime();
+
+		var SCENE1 = {
+				map: [
+					"wwwwwwwwwww",
+					"w---------w",
+					"w---------w",
+					"w----w----w",
+					"w---------w",
+					"w-w-------w",
+					"w------w--w",
+					"w---------w",
+					"w---------w",
+					"w---------w",
+					"wwwwwwwwwww"],
+				boxes: [{x: 2, y: 2}, {x: 6, y: 5}],
+				buho: {pos: {x: 5, y: 5}, direction: {x: 0, y: 1}},
+				exit: {pos: {x: 9, y: 9}},
+		};
+
+		function resizeCanvas() {
+			canvas.width = $(window).width();
+			canvas.height = $(window).height() - 5;
+			stage.update();
+		}
+
+		function setUpShape() {
+			border = new createjs.Shape();
+
+			// Set up border
+			border.graphics.beginStroke("lightgray").setStrokeStyle(25).drawRect(0, 0, 550, 550);
+			border.x = ($(window).width() / 2) - 275;
+			border.y = ($(window).height() / 2) - 275;
+
+			scene = new Scene(SCENE1);
+			scene.disappear(0, 0);
+			scene.appear(500, 2000);
+
+			// Add mask
+			mask = new createjs.Shape();
+			mask.graphics.beginFill("rgb(52, 61, 70)").drawRect(0, 0, $(window).width(), border.y);
+			mask.graphics.beginFill("rgb(52, 61, 70)").drawRect(0, 0, border.x, $(window).height());
+			mask.graphics.beginFill("rgb(52, 61, 70)").drawRect(0, border.y + 550, $(window).width(), $(window).height());
+			mask.graphics.beginFill("rgb(52, 61, 70)").drawRect(border.x + 550, 0, $(window).width(), $(window).height());
+
+			// 
+			// joystick = new Joystick({
+			// 	size: 60,
+			// 	event: pressKey,
+			// 	position: "downleft",
+			// });
+			controller = new Controller({
+				keyinterval: 175,
+				keyboard: true,
+				joystick: true,
+				keybind: {
+					"up": ["w", ARROWUP, JOYSTICKUP],
+					"down": ["s", ARROWDOWN, JOYSTICKDOWN],
+					"left": ["a", ARROWLEFT, JOYSTICKLEFT],
+					"right": ["d", ARROWRIGHT, JOYSTICKRIGHT],
+					"whitespace": [" "],
+				},
+				eventbind: function(key) {
+					var pos = Object.assign({}, scene.pos);
+
+					// Parse key
+					if (key == "up") {
+						scene.buhoMove({x: 0, y: -1});
+					}
+					else if (key == "down") {
+						scene.buhoMove({x: 0, y: 1});
+					}
+					else if (key == "left") {
+						scene.buhoMove({x: -1, y: 0});
+					}
+					else if (key == "right") {
+						scene.buhoMove({x: 1, y: 0});
+					}
+					else if (key == "whitespace") {
+						var resault = scene.buhoGrabRelease()
+
+						if (resault.removedChild != undefined) {
+							stage.removeChild(resault.removedChild.shape);
+						}
+					}
+
+					if (scene.exit.opened && (scene.buho.pos.x == scene.exit.pos.x && scene.buho.pos.y == scene.exit.pos.y)) {
+						scene.disappear();
+						setTimeout(function() {
+							scene.removeFromStage(stage);
+						}, 2300);
+					}
+				}
+			});
+
+			// Add shpe to stage
+			scene.bindStage(stage);
+			stage.addChild(border);
+			stage.addChild(mask);
+			controller.bindStage(stage);
+		}
+
+		$(document).ready(function() {
+			stage = new createjs.Stage("canvas");
+			createjs.Ticker.setFPS(30);
+			createjs.Ticker.addEventListener("tick", stage);
+
+			setUpShape();
+			resizeCanvas();
+
+			window.addEventListener("resize", resizeCanvas);
+
+			canvas.onmousedown = function(event){
+			    event.preventDefault();
+			};
+		})
+	</script>
+</body>
+</html>
